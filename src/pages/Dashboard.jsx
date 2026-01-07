@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [selectedChart, setSelectedChart] = useState("ecertin"); // Untuk table
   const [selectedYear, setSelectedYear] = useState(currentYear); // Tahun chart
   const [selectedType, setSelectedType] = useState("ecertin"); // Untuk chart
+  // const [selectedStatsYear, setSelectedStatsYear] = useState(currentYear);
   const [statsData, setStatsData] = useState({});
   const [tableData, setTableData] = useState([]);
   const [chartData, setChartData] = useState([]);
@@ -43,22 +44,25 @@ export default function Dashboard() {
   // Fetch total stats
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_ESPS_DASH_BE}/dashboard/stats`)
+      .get(
+        `${
+          import.meta.env.VITE_ESPS_DASH_BE
+        }/dashboard/stats?year=${selectedYear}`
+      )
       .then((res) => setStatsData(res.data || {}))
       .catch((err) => {
         console.error("Error fetching stats:", err);
         message.error("Gagal memuat statistik");
       });
-  }, []);
+  }, [selectedYear]);
 
   // Fetch table data
   useEffect(() => {
-    const year = statsData?.year || currentYear;
     axios
       .get(
         `${
           import.meta.env.VITE_ESPS_DASH_BE
-        }/dashboard/tabledata?type=${selectedChart}&year=${year}`
+        }/dashboard/tabledata?type=${selectedChart}&year=${selectedYear}`
       )
       .then((res) => {
         setTableData(Array.isArray(res.data) ? res.data : []);
@@ -67,7 +71,7 @@ export default function Dashboard() {
         console.error("Error fetching table data:", err);
         message.error("Gagal memuat data tabel");
       });
-  }, [selectedChart, statsData?.year]);
+  }, [selectedChart, selectedYear]);
 
   // Fetch chart data
   useEffect(() => {
@@ -138,26 +142,40 @@ export default function Dashboard() {
   return (
     <div className="w-full min-h-screen p-2 bg-gray-100">
       {/* Row 1: Stats */}
-      <div className="bg-white rounded-xl shadow w-full">
-        <h2 className="font-semibold ml-5 mb-2 pt-3">
-          Total Ecert dan Ephyto {statsData.year || currentYear}
-        </h2>
-        <div className="flex flex-col md:flex-row items-center justify-center p-2 gap-1 md:gap-4">
+      <div className="bg-white rounded-xl shadow w-full p-3">
+        <div className="flex justify-between items-center mb-3 px-2">
+          <h2 className="font-semibold">
+            Total Ecert dan Ephyto {selectedYear}
+          </h2>
+          <Select
+            value={selectedYear}
+            onChange={setSelectedYear}
+            style={{ width: 100 }}
+          >
+            {[2024, 2025, 2026].map((year) => (
+              <Select.Option key={year} value={year}>
+                {year}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
           {stats.map((stat) => (
             <div
               key={stat.title}
-              className="bg-gray-100 w-full pl-4 pr-8 pt-4 pb-4 gap-3 flex flex-row mb-4 rounded-xl ml-3 mr-3"
+              className="bg-gray-100 flex items-center gap-3 p-4 rounded-xl w-full"
             >
               <div
-                className={`${stat.color} text-white w-8 h-8 flex items-center justify-center rounded-full text-lg`}
+                className={`${stat.color} text-white w-8 h-8 flex items-center justify-center rounded-full`}
               >
                 {stat.icon}
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs">{stat.title}</span>
-                <span className="text-xl font-bold">
-                  {Number(stat.value || 0).toLocaleString("id-ID")}
-                </span>
+              <div>
+                <p className="text-xs">{stat.title}</p>
+                <p className="text-xl font-bold">
+                  {Number(stat.value).toLocaleString("id-ID")}
+                </p>
               </div>
             </div>
           ))}
@@ -169,19 +187,34 @@ export default function Dashboard() {
         {/* Table Card */}
         <div className="bg-white rounded-xl p-3 shadow w-full">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold ml-2">
-              Top Negara {statsData.year || currentYear}
-            </h2>
-            <Select
-              value={selectedChart}
-              onChange={(value) => setSelectedChart(value)}
-            >
-              <Select.Option value="ecertin">Ecert In</Select.Option>
-              <Select.Option value="ephytoin">Ephyto In</Select.Option>
-              <Select.Option value="ecertout">Ecert Out</Select.Option>
-              <Select.Option value="ephytoout">Ephyto Out</Select.Option>
-            </Select>
+            <h2 className="font-semibold">Top Negara {selectedYear}</h2>
+
+            <div className="flex gap-2">
+              <Select
+                value={selectedChart}
+                onChange={setSelectedChart}
+                style={{ width: 120 }}
+              >
+                <Select.Option value="ecertin">Ecert In</Select.Option>
+                <Select.Option value="ephytoin">Ephyto In</Select.Option>
+                <Select.Option value="ecertout">Ecert Out</Select.Option>
+                <Select.Option value="ephytoout">Ephyto Out</Select.Option>
+              </Select>
+
+              {/* <Select
+                value={selectedYear}
+                onChange={setSelectedYear}
+                style={{ width: 90 }}
+              >
+                {[2023, 2024, 2025, 2026].map((year) => (
+                  <Select.Option key={year} value={year}>
+                    {year}
+                  </Select.Option>
+                ))}
+              </Select> */}
+            </div>
           </div>
+
           <Table
             columns={columns}
             dataSource={tableData.map((item, idx) => ({
@@ -189,18 +222,16 @@ export default function Dashboard() {
               ...item,
               negara: countryMap[item.negara] || item.negara,
             }))}
-            pagination={{
-              pageSize: 5,
-              showSizeChanger: true,
-              pageSizeOptions: ["5", "10", "20"],
-            }}
+            pagination={{ pageSize: 5 }}
           />
         </div>
 
         {/* Chart Card */}
         <div className="bg-white rounded-xl p-3 shadow w-full">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold ml-2">Grafik Bulanan</h2>
+            <h2 className="font-semibold ml-2">
+              Grafik Bulanan {selectedYear}{" "}
+            </h2>
             <div className="flex gap-2">
               <Select
                 value={selectedType}
@@ -212,17 +243,17 @@ export default function Dashboard() {
                 <Select.Option value="ecertout">Ecert Out</Select.Option>
                 <Select.Option value="ephytoout">Ephyto Out</Select.Option>
               </Select>
-              <Select
+              {/* <Select
                 value={selectedYear}
                 onChange={(val) => setSelectedYear(val)}
                 style={{ width: 90 }}
               >
-                {[2023, 2024, 2025].map((year) => (
+                {[2023, 2024, 2025, 2026].map((year) => (
                   <Select.Option key={year} value={year}>
                     {year}
                   </Select.Option>
                 ))}
-              </Select>
+              </Select> */}
             </div>
           </div>
           <ResponsiveContainer width="100%" height={250}>
