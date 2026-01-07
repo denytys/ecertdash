@@ -11,11 +11,11 @@ import OutgoingCertificate from "./pages/OutgoingCertificate";
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/dashboard/">
       <Routes>
         <Route path="/" element={<Home />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Navigate to="main" replace />} />
+          <Route path="main" element={<Dashboard />} />
           <Route path="incoming" element={<IncomingCertificate />} />
           <Route path="outgoing" element={<OutgoingCertificate />} />
         </Route>

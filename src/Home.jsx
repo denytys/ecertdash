@@ -17,7 +17,7 @@ export default function Home() {
 
   const items = [
     {
-      key: "dashboard",
+      key: "main",
       icon: <LayoutDashboard size={16} />,
       label: "Dashboard",
     },
