@@ -118,7 +118,7 @@ export default function Dashboard() {
     },
     {
       title: "Ecert Out",
-      value: statsData.ecert_out || 0,
+      value: statsData.eah_out || 0,
       icon: <LogoutOutlined />,
       color: "bg-green-500",
     },
